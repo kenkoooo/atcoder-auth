@@ -1,0 +1,32 @@
+service: atcoder-auth
+provider:
+  name: aws
+  runtime: rust
+  memorySize: 128
+  region: ap-northeast-1
+
+package:
+  individually: true
+
+plugins:
+  - serverless-rust
+
+functions:
+  authorize:
+    handler: atcoder-auth.authorize
+    events:
+      - http:
+          path: /api/authorize
+          method: post
+  confirm:
+    handler: atcoder-auth.confirm
+    events:
+      - http:
+          path: /api/confirm
+          method: post
+  verify:
+    handler: atcoder-auth.verify
+    events:
+      - http:
+          path: /api/verify
+          method: post
