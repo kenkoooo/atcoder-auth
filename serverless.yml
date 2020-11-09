@@ -26,6 +26,7 @@ functions:
       - http:
           path: /api/authorize
           method: post
+          cors: true
     environment:
       RUST_BACKTRACE: 1
   confirm:
@@ -34,12 +35,14 @@ functions:
       - http:
           path: /api/confirm
           method: post
+          cors: true
   verify:
     handler: atcoder-auth.verify
     events:
       - http:
           path: /api/verify
           method: post
+          cors: true
 resources:
   Resources:
     AtCoderAuthCode:

@@ -1,3 +1,7 @@
+use crate::generate_random_string;
+use bcrypt::Version;
+use rand::distributions::Uniform;
+use rand::{thread_rng, Rng};
 use rusoto_dynamodb::{AttributeValue, GetItemInput, GetItemOutput, PutItemInput};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -78,14 +82,18 @@ impl VerificationCode {
 
 pub struct AuthToken {
     user_id: String,
-    token: String,
+    hash: String,
 }
 
 impl AuthToken {
     pub fn new(user_id: &str, token: &str) -> Self {
+        let cost = get_random_cost();
+        let salt = generate_random_string(16);
+        let parts = bcrypt::hash_with_salt(token, cost, salt.as_bytes()).unwrap();
+
         Self {
             user_id: user_id.to_string(),
-            token: token.to_string(),
+            hash: parts.format_for_version(Version::TwoB),
         }
     }
     pub fn get_item_input(user_id: &str) -> GetItemInput {
@@ -103,10 +111,10 @@ impl AuthToken {
             ..Default::default()
         }
     }
-    pub fn get_token(get_item_output: &GetItemOutput) -> Option<String> {
+    pub fn get_hash(get_item_output: &GetItemOutput) -> Option<String> {
         let item = get_item_output.item.as_ref()?;
-        let verification_code = item.get("token")?.s.as_ref()?;
-        Some(verification_code.to_string())
+        let hash = item.get("hash")?.s.as_ref()?;
+        Some(hash.to_string())
     }
     pub fn to_put_item_input(&self) -> PutItemInput {
         let mut item = HashMap::new();
@@ -118,9 +126,9 @@ impl AuthToken {
             },
         );
         item.insert(
-            String::from("token"),
+            String::from("hash"),
             AttributeValue {
-                s: Some(self.token.clone()),
+                s: Some(self.hash.clone()),
                 ..Default::default()
             },
         );
@@ -130,4 +138,8 @@ impl AuthToken {
             ..Default::default()
         }
     }
+}
+
+fn get_random_cost() -> u32 {
+    thread_rng().sample(Uniform::from(10..14))
 }

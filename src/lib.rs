@@ -4,16 +4,19 @@ pub use model::{AuthToken, VerificationCode};
 mod scraping;
 pub use scraping::get_affiliation;
 
+use lambda_http::http::header::{ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE};
 use lambda_http::RequestExt;
 use lambda_runtime::error::HandlerError;
 use lambda_runtime::Context;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-pub fn generate_random_string() -> String {
-    thread_rng().sample_iter(&Alphanumeric).take(30).collect()
+pub fn generate_random_string(length: usize) -> String {
+    thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(length)
+        .collect()
 }
 
 pub trait LambdaHandler<Request, Response> {
@@ -49,8 +52,16 @@ where
 
             match f.execute(request) {
                 Ok(response) => {
-                    let value: Value = serde_json::to_value(response)?;
-                    Ok(value)
+                    let body = serde_json::to_string(&response)?;
+                    let response = lambda_http::Response::builder()
+                        .header(CONTENT_TYPE, "application/json")
+                        .header(ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                        .body(body)
+                        .map_err(|e| {
+                            log::error!("{:?}", e);
+                            HandlerError::from(format!("{:?}", e).as_str())
+                        })?;
+                    Ok(response)
                 }
                 Err(e) => {
                     log::error!("{:?}", e);

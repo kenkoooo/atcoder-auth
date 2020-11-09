@@ -44,7 +44,7 @@ fn handler(request: Request) -> Result<Response, HandlerError> {
         return Err(HandlerError::from("Verification code unmatched"));
     }
 
-    let token = generate_random_string();
+    let token = generate_random_string(30);
 
     let auth_token = AuthToken::new(&request.user_id, &token);
     rt.block_on(client.put_item(auth_token.to_put_item_input()))

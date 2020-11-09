@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn handler(request: Request) -> Result<Response, HandlerError> {
-    let verification_code: String = generate_random_string();
+    let verification_code: String = generate_random_string(30);
     let item = VerificationCode::new(&request.user_id, &verification_code);
 
     let client = DynamoDbClient::new(Region::ApNortheast1);

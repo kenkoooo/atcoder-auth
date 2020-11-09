@@ -27,11 +27,11 @@ fn handler(request: Request) -> Result<&'static str, HandlerError> {
     let result = rt
         .block_on(result)
         .map_err(|e| HandlerError::from(format!("{:?}", e).as_str()))?;
-    let token = AuthToken::get_token(&result).ok_or_else(|| HandlerError::from("not found"))?;
+    let hash = AuthToken::get_hash(&result).ok_or_else(|| HandlerError::from("not found"))?;
 
-    if request.token != token {
-        Err(HandlerError::from("Token unmatched"))
-    } else {
+    if bcrypt::verify(request.token, &hash).unwrap_or(false) {
         Ok("Ok")
+    } else {
+        Err(HandlerError::from("Token unmatched"))
     }
 }
