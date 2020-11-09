@@ -4,6 +4,14 @@ provider:
   runtime: rust
   memorySize: 128
   region: ap-northeast-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:GetItem"
+        - "dynamodb:PutItem"
+      Resource:
+        - "arn:aws:dynamodb:ap-northeast-1:*:table/AtCoderAuthCode"
+        - "arn:aws:dynamodb:ap-northeast-1:*:table/AtCoderAuthToken"
 
 package:
   individually: true
@@ -18,6 +26,8 @@ functions:
       - http:
           path: /api/authorize
           method: post
+    environment:
+      RUST_BACKTRACE: 1
   confirm:
     handler: atcoder-auth.confirm
     events:
@@ -30,3 +40,35 @@ functions:
       - http:
           path: /api/verify
           method: post
+resources:
+  Resources:
+    AtCoderAuthCode:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: AtCoderAuthCode
+        AttributeDefinitions:
+          - AttributeName: user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: user_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TimeToLiveSpecification:
+          AttributeName: expired_at
+          Enabled: true
+    AtCoderAuthToken:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: AtCoderAuthToken
+        AttributeDefinitions:
+          - AttributeName: user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: user_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+

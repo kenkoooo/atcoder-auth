@@ -3,14 +3,20 @@ name = "atcoder-auth"
 version = "0.1.0"
 authors = ["kenkoooo <kenkou.n@gmail.com>"]
 edition = "2018"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 lambda_runtime = "0.2.1"
-env_logger = "0.8.1"
 rand = "0.7.3"
 rusoto_dynamodb = "0.45.0"
-log = "0.4.11"
 serde = { version = "1.0.117", features = ["derive"] }
 serde_json = "1.0.59"
+lambda_http = "0.1.1"
+rusoto_core = "0.45.0"
+tokio = { version = "0.2.22", features = ["macros"] }
+env_logger = "0.8.1"
+log = "0.4.11"
+reqwest = "0.10.8"
+scraper = "0.12.0"
