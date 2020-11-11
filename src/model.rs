@@ -12,19 +12,22 @@ const EXPIRATION_SECONDS: u64 = 300;
 
 pub struct VerificationCode {
     user_id: String,
-    verification_code: String,
+    verification_hash: String,
     expired_at: u64,
 }
 
 impl VerificationCode {
-    pub fn new(user_id: &str, verification_code: &str) -> Self {
+    pub fn new(user_id: &str, verification_code: &str, secret: &str) -> Self {
         let unix_second = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
+
+        let verification_pass = verification_code.to_string() + secret;
+        let verification_hash = bcrypt::hash(verification_pass, 10).expect("Hashing failed");
         Self {
             user_id: user_id.to_string(),
-            verification_code: verification_code.to_string(),
+            verification_hash,
             expired_at: unix_second + EXPIRATION_SECONDS,
         }
     }
@@ -43,10 +46,10 @@ impl VerificationCode {
             ..Default::default()
         }
     }
-    pub fn get_verification_code(get_item_output: &GetItemOutput) -> Option<String> {
+    pub fn get_verification_hash(get_item_output: &GetItemOutput) -> Option<String> {
         let item = get_item_output.item.as_ref()?;
-        let verification_code = item.get("verification_code")?.s.as_ref()?;
-        Some(verification_code.to_string())
+        let verification_hash = item.get("verification_hash")?.s.as_ref()?;
+        Some(verification_hash.to_string())
     }
 
     pub fn to_put_item_input(&self) -> PutItemInput {
@@ -59,9 +62,9 @@ impl VerificationCode {
             },
         );
         item.insert(
-            String::from("verification_code"),
+            String::from("verification_hash"),
             AttributeValue {
-                s: Some(self.verification_code.clone()),
+                s: Some(self.verification_hash.clone()),
                 ..Default::default()
             },
         );

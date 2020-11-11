@@ -1,4 +1,4 @@
-# AtCoder Authentication API
+# AtCoder Authentication API [beta]
 
 AtCoder ユーザーの本人確認を行うための API です。
 
@@ -11,7 +11,7 @@ AtCoder ユーザーの本人確認を行うための API です。
 # POST /api/authorize
 
 本人確認を行いたいユーザーの `user_id` を送ります。
-認証用コード `verification_code` が返ってきます。
+認証用コード `verification_code` と `secret` が返ってきます。
 
 ## Request
 ```json
@@ -38,7 +38,7 @@ curl -X POST https://atcoder-auth.kenkoooo.com/api/authorize \
 
 # POST /api/confirm
 
-`/api/authorize` で手に入れた認証用コード `verification_code` を AtCoder の "所属" 欄に設定したら、 `user_id` を送ります。
+`/api/authorize` で手に入れた認証用コード `verification_code` を AtCoder の "所属" 欄に設定したら、 `user_id` と先ほど手に入れた `secret` を送ります。
 所属欄に正しく設定されていて本人確認できれば、`token` が返ってきます。
 `token` が返ってきたら所属欄をもとに戻しても構いません。
 以降は `/api/verify` で `token` を使って本人確認できます。
@@ -46,7 +46,8 @@ curl -X POST https://atcoder-auth.kenkoooo.com/api/authorize \
 ## Request
 ```json
 {
-  "user_id": "(user_id to confirm)"
+  "user_id": "(user_id to confirm)",
+  "secret": "(secret)"
 }
 ```
 

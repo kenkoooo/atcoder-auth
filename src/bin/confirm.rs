@@ -11,6 +11,7 @@ use std::error::Error;
 #[derive(Deserialize)]
 struct Request {
     user_id: String,
+    secret: String,
 }
 
 #[derive(Serialize)]
@@ -33,14 +34,16 @@ fn handler(request: Request) -> Result<Response, HandlerError> {
     let result = rt
         .block_on(result)
         .map_err(|e| HandlerError::from(format!("{:?}", e).as_str()))?;
-    let verification_code = VerificationCode::get_verification_code(&result)
+    let verification_hash = VerificationCode::get_verification_hash(&result)
         .ok_or_else(|| HandlerError::from("not found"))?;
 
-    let current_affiliation = rt
+    let verification_code = rt
         .block_on(get_affiliation(&request.user_id))
         .map_err(|e| HandlerError::from(format!("{:?}", e).as_str()))?
         .ok_or_else(|| HandlerError::from("Empty affiliation"))?;
-    if current_affiliation != verification_code {
+    let verification_pass = verification_code + &request.secret;
+
+    if !bcrypt::verify(verification_pass, &verification_hash).unwrap_or(false) {
         return Err(HandlerError::from("Verification code unmatched"));
     }
 

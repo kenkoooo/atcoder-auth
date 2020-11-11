@@ -14,6 +14,7 @@ struct Request {
 #[derive(Serialize)]
 struct Response {
     verification_code: String,
+    secret: String,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -25,7 +26,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn handler(request: Request) -> Result<Response, HandlerError> {
     let verification_code: String = generate_random_string(30);
-    let item = VerificationCode::new(&request.user_id, &verification_code);
+    let secret: String = generate_random_string(30);
+    let item = VerificationCode::new(&request.user_id, &verification_code, &secret);
 
     let client = DynamoDbClient::new(Region::ApNortheast1);
     let result = client.put_item(item.to_put_item_input());
@@ -34,6 +36,9 @@ fn handler(request: Request) -> Result<Response, HandlerError> {
     rt.block_on(result)
         .map_err(|e| HandlerError::from(format!("{:?}", e).as_str()))?;
 
-    let response = Response { verification_code };
+    let response = Response {
+        verification_code,
+        secret,
+    };
     Ok(response)
 }
